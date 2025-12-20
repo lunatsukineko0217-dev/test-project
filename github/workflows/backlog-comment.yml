@@ -1,0 +1,22 @@
+name: Post Comment to Backlog
+on: [push]
+
+jobs:
+  backlog-comment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post comment
+        run: |
+          # コミットメッセージから課題キー（例：A1-1）を探す
+          ISSUE_KEY=$(echo "${{ github.event.head_commit.message }}" | grep -oE "[A-Z0-9]+-[0-9]+")
+          if [ -z "$ISSUE_KEY" ]; then
+            echo "No issue key found."
+            exit 0
+          fi
+          
+          # Backlogのスペース名（URLが https://xxx.backlog.com なら xxx を入れる）
+          SPACE_NAME="llwo"
+          
+          # Backlog APIを使ってコメントを投稿
+          curl -X POST "https://$SPACE_NAME.backlog.com/api/v2/issues/$ISSUE_KEY/comments?apiKey=${{ secrets.BACKLOG_API_KEY }}" \
+            -d "content=GitHubに更新がありました！ 内容: ${{ github.event.head_commit.message }} URL: ${{ github.event.head_commit.url }}"
